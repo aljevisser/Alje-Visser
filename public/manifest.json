@@ -1,0 +1,17 @@
+{
+  "name": "Mijn Dagboek",
+  "short_name": "Dagboek",
+  "description": "Jouw persoonlijke dagboek",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf6f1",
+  "theme_color": "#faf6f1",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
