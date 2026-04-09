@@ -101,3 +101,37 @@ export async function deleteEntry(id: string): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
 }
+
+export async function exportEntries(): Promise<void> {
+  const entries = await getAllEntries();
+  const json = JSON.stringify(entries, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dagboek-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function importEntries(file: File): Promise<number> {
+  const text = await file.text();
+  const parsed: unknown = JSON.parse(text);
+  if (!Array.isArray(parsed)) throw new Error('Ongeldig bestandsformaat');
+
+  const entries = (parsed as JournalEntry[]).filter(
+    e => e.id && e.createdAt && e.body !== undefined
+  );
+
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  const store = tx.objectStore(STORE_NAME);
+  for (const entry of entries) {
+    store.put(entry);
+  }
+  await new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  return entries.length;
+}

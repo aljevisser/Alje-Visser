@@ -45,5 +45,5 @@ export function useEntries() {
     await refresh();
   }, [refresh]);
 
-  return { entries, createEntry, updateEntry, removeEntry };
+  return { entries, createEntry, updateEntry, removeEntry, refresh };
 }
