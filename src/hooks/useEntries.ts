@@ -1,11 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { JournalEntry } from '../types/entry';
 import * as storage from '../lib/storage';
 
 export function useEntries() {
-  const [entries, setEntries] = useState<JournalEntry[]>(() => storage.getAllEntries());
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
 
-  const createEntry = useCallback((title: string, body: string): JournalEntry => {
+  const refresh = useCallback(async () => {
+    setEntries(await storage.getAllEntries());
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const createEntry = useCallback(async (title: string, body: string): Promise<JournalEntry> => {
     const now = new Date().toISOString();
     const entry: JournalEntry = {
       id: crypto.randomUUID(),
@@ -14,13 +22,13 @@ export function useEntries() {
       createdAt: now,
       updatedAt: now,
     };
-    storage.saveEntry(entry);
-    setEntries(storage.getAllEntries());
+    await storage.saveEntry(entry);
+    await refresh();
     return entry;
-  }, []);
+  }, [refresh]);
 
-  const updateEntry = useCallback((id: string, title: string, body: string) => {
-    const existing = storage.getEntry(id);
+  const updateEntry = useCallback(async (id: string, title: string, body: string) => {
+    const existing = await storage.getEntry(id);
     if (!existing) return;
     const updated: JournalEntry = {
       ...existing,
@@ -28,14 +36,14 @@ export function useEntries() {
       body,
       updatedAt: new Date().toISOString(),
     };
-    storage.saveEntry(updated);
-    setEntries(storage.getAllEntries());
-  }, []);
+    await storage.saveEntry(updated);
+    await refresh();
+  }, [refresh]);
 
-  const removeEntry = useCallback((id: string) => {
-    storage.deleteEntry(id);
-    setEntries(storage.getAllEntries());
-  }, []);
+  const removeEntry = useCallback(async (id: string) => {
+    await storage.deleteEntry(id);
+    await refresh();
+  }, [refresh]);
 
   return { entries, createEntry, updateEntry, removeEntry };
 }
